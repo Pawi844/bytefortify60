@@ -35,6 +35,10 @@ Route::get('/events/{event:slug}/speakers', [EventFrontController::class, 'speak
 Route::get('/events/{event:slug}/sponsors', [EventFrontController::class, 'sponsors'])->name('event.sponsors');
 Route::get('/events/{event:slug}/cfp', [EventFrontController::class, 'cfp'])->name('event.cfp');
 Route::post('/events/{event:slug}/cfp', [EventFrontController::class, 'submitPaper'])->name('event.cfp.submit');
+Route::get('/events/{event:slug}/pay/{order}', [EventFrontController::class, 'showPayment'])->name('event.payment');
+Route::post('/events/{event:slug}/pay/{order}', [EventFrontController::class, 'processPayment'])->name('event.payment.process');
+Route::get('/events/{event:slug}/pay/{order}/callback', [EventFrontController::class, 'paymentCallback'])->name('event.payment.callback');
+Route::get('/events/{event:slug}/pay/{order}/success', [EventFrontController::class, 'paymentSuccess'])->name('event.payment.success');
 
 // ─── Admin Auth ───────────────────────────────────────────────────────────────
 Route::get('/admin/login', [AdminAuthController::class, 'showLogin'])->name('admin.login');
@@ -73,13 +77,13 @@ Route::get('/admin/events/{eventId}/orders/{id}/receipt', [OrderController::clas
 
 // ─── Attendees ────────────────────────────────────────────────────────────────
 Route::get('/admin/events/{eventId}/attendees', [AttendeeController::class, 'index'])->name('admin.attendees.index');
+Route::get('/admin/events/{eventId}/attendees/export', [AttendeeController::class, 'export'])->name('admin.attendees.export');
+Route::post('/admin/events/{eventId}/attendees/import', [AttendeeController::class, 'import'])->name('admin.attendees.import');
 Route::get('/admin/events/{eventId}/attendees/{id}', [AttendeeController::class, 'show'])->name('admin.attendees.show');
 Route::get('/admin/events/{eventId}/attendees/{id}/edit', [AttendeeController::class, 'edit'])->name('admin.attendees.edit');
 Route::put('/admin/events/{eventId}/attendees/{id}', [AttendeeController::class, 'update'])->name('admin.attendees.update');
 Route::delete('/admin/events/{eventId}/attendees/{id}', [AttendeeController::class, 'destroy'])->name('admin.attendees.destroy');
 Route::get('/admin/events/{eventId}/attendees/{id}/badge', [AttendeeController::class, 'badge'])->name('admin.attendees.badge');
-Route::post('/admin/events/{eventId}/attendees/import', [AttendeeController::class, 'import'])->name('admin.attendees.import');
-Route::get('/admin/events/{eventId}/attendees/export', [AttendeeController::class, 'export'])->name('admin.attendees.export');
 
 // ─── Speakers ─────────────────────────────────────────────────────────────────
 Route::get('/admin/events/{eventId}/speakers', [SpeakerController::class, 'index'])->name('admin.speakers.index');

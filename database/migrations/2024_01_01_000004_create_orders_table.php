@@ -19,6 +19,12 @@ return new class extends Migration
             $table->dateTime('paid_at')->nullable();
             $table->dateTime('refunded_at')->nullable();
             $table->string('payment_method')->nullable();
+            $table->string('payment_reference')->nullable();
+            $table->string('payment_phone')->nullable();
+            $table->text('payment_gateway_response')->nullable();
+            $table->string('bank_name')->nullable();
+            $table->string('bank_account_name')->nullable();
+            $table->string('bank_slip_ref')->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('access_code_id')->nullable()->constrained('access_codes')->nullOnDelete();
             $table->timestamps();

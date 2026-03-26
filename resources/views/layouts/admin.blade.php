@@ -7,15 +7,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
-        .sidebar-link { @apply flex items-center gap-3 px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all text-sm; }
-        .sidebar-link.active { @apply bg-white/15 text-white font-medium; }
-        .sidebar-section { @apply text-xs text-gray-500 uppercase tracking-wider px-3 mt-4 mb-1 font-semibold; }
+        .sidebar-link { display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; border-radius:0.5rem; color:#d1d5db; font-size:0.875rem; transition:all 0.15s; }
+        .sidebar-link:hover { background:rgba(255,255,255,0.1); color:#fff; }
+        .sidebar-link.active { background:rgba(255,255,255,0.15); color:#fff; font-weight:500; }
+        .sidebar-section { font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.05em; padding:0 0.75rem; margin-top:1rem; margin-bottom:0.25rem; font-weight:600; }
+        #sidebar { transition: transform 0.3s ease; }
+        @media(max-width:768px){
+            #sidebar { position:fixed; top:0; left:0; height:100vh; z-index:50; transform:translateX(-100%); }
+            #sidebar.open { transform:translateX(0); }
+            #sidebar-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:40; }
+            #sidebar-overlay.open { display:block; }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
+<div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 <div class="flex h-screen overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-64 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col flex-shrink-0">
+    <aside id="sidebar" class="w-64 bg-gradient-to-b from-slate-800 to-slate-900 flex flex-col flex-shrink-0">
         <div class="p-4 border-b border-white/10">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center"><i class="fas fa-calendar-check text-white text-sm"></i></div>
@@ -33,7 +42,7 @@
 
             @if(isset($event))
             <div class="mt-4">
-                <p class="sidebar-section">{{ Str::limit($event->name, 22) }}</p>
+                <p class="sidebar-section">{{ \Illuminate\Support\Str::limit($event->name, 22) }}</p>
 
                 <p class="sidebar-section mt-3">Tickets & Orders</p>
                 <a href="{{ route('admin.tickets.index', $event->id) }}" class="sidebar-link {{ request()->routeIs('admin.tickets.*') ? 'active' : '' }}">
@@ -107,12 +116,17 @@
     </aside>
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-            <div>
-                <h1 class="text-xl font-bold text-gray-800">@yield('page-title', 'Dashboard')</h1>
-                <p class="text-sm text-gray-500">@yield('page-subtitle', '')</p>
-            </div>
+        <header class="bg-white shadow-sm px-4 md:px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold text-gray-800">@yield('page-title', 'Dashboard')</h1>
+                    <p class="text-xs md:text-sm text-gray-500 hidden sm:block">@yield('page-subtitle', '')</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3">
                 @yield('header-actions')
             </div>
         </header>
@@ -133,10 +147,18 @@
             @endforeach
         </div>
         @endif
-        <main class="flex-1 overflow-y-auto p-6">
+        <main class="flex-1 overflow-y-auto p-3 md:p-6">
             @yield('content')
         </main>
     </div>
 </div>
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('open');
+}
+</script>
 </body>
 </html>
