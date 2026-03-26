@@ -33,14 +33,14 @@ class AttendeePortalController extends Controller
         $attendee = $this->attendee();
         $event    = $attendee->event;
         $schedule = Schedule::where('event_id', $event->id)->orderBy('start_time')->take(5)->get();
-        return view('portal.dashboard', compact('attendee','event','schedule'));
+        return view('admin.portal.dashboard', compact('attendee','event','schedule'));
     }
 
     public function profile()
     {
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
-        return view('portal.profile', compact('attendee'));
+        return view('admin.portal.profile', compact('attendee'));
     }
 
     public function updateProfile(Request $request)
@@ -59,6 +59,7 @@ class AttendeePortalController extends Controller
             'twitter'      => 'nullable|url',
         ]);
         $attendee->update($validated);
+        session(['attendee_name' => $attendee->first_name . ' ' . $attendee->last_name]);
         return back()->with('success', 'Profile updated!');
     }
 
@@ -67,7 +68,7 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $orders   = Order::with(['ticket','event'])->where('attendee_id', $attendee->id)->get();
-        return view('portal.tickets', compact('attendee','orders'));
+        return view('admin.portal.tickets', compact('attendee','orders'));
     }
 
     public function invoice($orderId)
@@ -75,7 +76,7 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $order    = Order::with(['ticket','event'])->where('attendee_id', $attendee->id)->findOrFail($orderId);
-        return view('portal.invoice', compact('attendee','order'));
+        return view('admin.portal.invoice', compact('attendee','order'));
     }
 
     public function receipt($orderId)
@@ -83,7 +84,7 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $order    = Order::with(['ticket','event'])->where('attendee_id', $attendee->id)->findOrFail($orderId);
-        return view('portal.receipt', compact('attendee','order'));
+        return view('admin.portal.receipt', compact('attendee','order'));
     }
 
     public function badge($orderId)
@@ -91,17 +92,17 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $order    = Order::with(['ticket','event'])->where('attendee_id', $attendee->id)->findOrFail($orderId);
-        return view('portal.badge', compact('attendee','order'));
+        return view('admin.portal.badge', compact('attendee','order'));
     }
 
     public function schedule()
     {
         if ($r = $this->guard()) return $r;
-        $attendee      = $this->attendee();
-        $event         = $attendee->event;
-        $allSessions   = Schedule::where('event_id', $event->id)->with('speaker')->orderBy('start_time')->get()->groupBy(fn($s) => $s->start_time->format('Y-m-d'));
-        $mySessions    = $attendee->sessions()->pluck('schedule_id')->toArray();
-        return view('portal.schedule', compact('attendee','event','allSessions','mySessions'));
+        $attendee    = $this->attendee();
+        $event       = $attendee->event;
+        $allSessions = Schedule::where('event_id', $event->id)->with('speaker')->orderBy('start_time')->get()->groupBy(fn($s) => $s->start_time->format('Y-m-d'));
+        $mySessions  = $attendee->sessions()->pluck('schedule_id')->toArray();
+        return view('admin.portal.schedule', compact('attendee','event','allSessions','mySessions'));
     }
 
     public function toggleSession($sessionId)
@@ -121,10 +122,10 @@ class AttendeePortalController extends Controller
     public function surveys()
     {
         if ($r = $this->guard()) return $r;
-        $attendee = $this->attendee();
-        $surveys  = Survey::where('event_id', $attendee->event_id)->where('is_active', true)->get();
+        $attendee  = $this->attendee();
+        $surveys   = Survey::where('event_id', $attendee->event_id)->where('is_active', true)->get();
         $responded = SurveyResponse::where('attendee_id', $attendee->id)->pluck('survey_id')->toArray();
-        return view('portal.surveys', compact('attendee','surveys','responded'));
+        return view('admin.portal.surveys', compact('attendee','surveys','responded'));
     }
 
     public function takeSurvey($surveyId)
@@ -132,7 +133,7 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $survey   = Survey::findOrFail($surveyId);
-        return view('portal.survey-take', compact('attendee','survey'));
+        return view('admin.portal.survey-take', compact('attendee','survey'));
     }
 
     public function submitSurvey(Request $request, $surveyId)
@@ -144,7 +145,7 @@ class AttendeePortalController extends Controller
             'attendee_id' => $attendee->id,
             'answers'     => json_encode($request->except('_token')),
         ]);
-        return redirect()->route('portal.surveys')->with('success', 'Survey submitted! Thank you.');
+        return redirect()->route('portal.surveys')->with('success', 'Survey submitted! Thank you for your feedback.');
     }
 
     public function papers()
@@ -152,7 +153,7 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $papers   = Paper::where('author_id', $attendee->id)->with('reviews')->get();
-        return view('portal.papers', compact('attendee','papers'));
+        return view('admin.portal.papers', compact('attendee','papers'));
     }
 
     public function viewPaper($paperId)
@@ -160,6 +161,6 @@ class AttendeePortalController extends Controller
         if ($r = $this->guard()) return $r;
         $attendee = $this->attendee();
         $paper    = Paper::where('author_id', $attendee->id)->with('reviews')->findOrFail($paperId);
-        return view('portal.paper-detail', compact('attendee','paper'));
+        return view('admin.portal.paper-detail', compact('attendee','paper'));
     }
 }
