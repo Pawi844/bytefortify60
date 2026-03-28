@@ -80,12 +80,23 @@ class AttendeeController extends Controller
     {
         if ($r = $this->authCheck()) return $r;
         $attendees = Attendee::where('event_id', $eventId)->with('orders.ticket')->get();
-        $csv  = "First Name,Last Name,Email,Phone,Organization,Job Title,Checked In,Ticket\n";
+        $csv = "First Name,Last Name,Email,Phone,Organization,Job Title,Checked In,Ticket\n";
         foreach ($attendees as $a) {
-            $ticket = $a->orders->first()?->ticket?->name ?? 'N/A';
-            $csv   .= "\"{$a->first_name}\",\"{$a->last_name}\",\"{$a->email}\",\"{$a->phone}\",\"{$a->organization}\",\"{$a->job_title}\",\".($a->checked_in?'Yes':'No')."\",\"{$ticket}\"\n";
+            $ticket   = $a->orders->first()?->ticket?->name ?? 'N/A';
+            $checkedIn = $a->checked_in ? 'Yes' : 'No';
+            $csv .= '"' . $a->first_name . '",'
+                  . '"' . $a->last_name . '",'
+                  . '"' . $a->email . '",'
+                  . '"' . $a->phone . '",'
+                  . '"' . $a->organization . '",'
+                  . '"' . $a->job_title . '",'
+                  . '"' . $checkedIn . '",'
+                  . '"' . $ticket . '"' . "\n";
         }
-        return response($csv, 200, ['Content-Type'=>'text/csv','Content-Disposition'=>'attachment; filename="attendees.csv"']);
+        return response($csv, 200, [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="attendees.csv"',
+        ]);
     }
 
     public function import(Request $request, $eventId)
