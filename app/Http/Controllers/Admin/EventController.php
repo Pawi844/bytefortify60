@@ -15,6 +15,30 @@ class EventController extends Controller
         return null;
     }
 
+    /**
+     * Generate a unique slug, appending a counter if slug already exists.
+     */
+    private function uniqueSlug(string $base, ?int $excludeId = null): string
+    {
+        $slug      = Str::slug($base);
+        $original  = $slug;
+        $counter   = 1;
+
+        while (true) {
+            $query = Event::where('slug', $slug);
+            if ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            }
+            if (!$query->exists()) {
+                break;
+            }
+            $slug = $original . '-' . $counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
     public function index()
     {
         if ($r = $this->authCheck()) return $r;
@@ -31,9 +55,10 @@ class EventController extends Controller
     public function store(Request $request)
     {
         if ($r = $this->authCheck()) return $r;
+
         $validated = $request->validate([
             'name'         => 'required|string|max:255',
-            'slug'         => 'nullable|string|unique:events,slug',
+            'slug'         => 'nullable|string|max:255',
             'description'  => 'nullable|string',
             'start_date'   => 'required|date',
             'end_date'     => 'required|date|after_or_equal:start_date',
@@ -46,18 +71,25 @@ class EventController extends Controller
             'is_virtual'   => 'boolean',
             'virtual_link' => 'nullable|url',
         ]);
-        $validated['slug']   = $validated['slug'] ?? Str::slug($validated['name']);
-        $validated['status'] = 'draft';
+
+        // Always generate a guaranteed-unique slug
+        $baseSlug           = !empty($validated['slug']) ? $validated['slug'] : $validated['name'];
+        $validated['slug']  = $this->uniqueSlug($baseSlug);
+
+        $validated['status']     = 'draft';
         $validated['created_by'] = session('admin_email');
+
         $event = Event::create($validated);
-        return redirect()->route('admin.events.show', $event->id)->with('success', 'Event created successfully!');
+
+        return redirect()->route('admin.events.show', $event->id)
+            ->with('success', 'Event created successfully!');
     }
 
     public function show($id)
     {
         if ($r = $this->authCheck()) return $r;
-        $event = Event::withCount(['attendees','orders','speakers','papers','schedules'])->findOrFail($id);
-        $revenue = $event->orders()->where('status','paid')->sum('total_amount');
+        $event     = Event::withCount(['attendees','orders','speakers','papers','schedules'])->findOrFail($id);
+        $revenue   = $event->orders()->where('status','paid')->sum('total_amount');
         $checkedIn = $event->attendees()->where('checked_in', true)->count();
         return view('admin.events.show', compact('event','revenue','checkedIn'));
     }
@@ -73,6 +105,7 @@ class EventController extends Controller
     {
         if ($r = $this->authCheck()) return $r;
         $event = Event::findOrFail($id);
+
         $validated = $request->validate([
             'name'         => 'required|string|max:255',
             'description'  => 'nullable|string',
@@ -87,8 +120,11 @@ class EventController extends Controller
             'is_virtual'   => 'boolean',
             'virtual_link' => 'nullable|url',
         ]);
+
         $event->update($validated);
-        return redirect()->route('admin.events.show', $id)->with('success', 'Event updated successfully!');
+
+        return redirect()->route('admin.events.show', $id)
+            ->with('success', 'Event updated successfully!');
     }
 
     public function destroy($id)
